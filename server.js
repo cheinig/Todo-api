@@ -48,8 +48,8 @@ app.post('/todos', function (req, res) {
     res.json(body);
 });
 
+// DELETE /todos/:id
 app.delete('/todos/:id', function (req, res) {
-    var todoId = parseInt(req.params.id, 10);
     var item = _.findWhere(todos, {id: todoId});
 
     if (!item) {
@@ -58,6 +58,35 @@ app.delete('/todos/:id', function (req, res) {
         todos = _.without(todos, item);
         res.json(item);
     }
+});
+
+// PUT /todos/:id
+app.put('/todos/:id', function (req, res) {
+    var body = _.pick(req.body, 'description', 'completed');
+    var validAttributes = {};
+    var todoId = parseInt(req.params.id, 10);
+    var item = _.findWhere(todos, {id: todoId});
+
+    if (!item) {
+        return res.status(404).json({"error": "no todo found with that id"});
+    }
+
+    if (body.hasOwnProperty('completed') && _.isBoolean(body.completed)){
+        validAttributes.completed = body.completed;
+    } else if (body.hasOwnProperty('completed')){
+        return res.status(400).send();
+    }
+
+    if (body.hasOwnProperty('description') && _.isString(body.description) && body.description.trim().length > 0){
+        validAttributes.description = body.description;
+    } else if (body.hasOwnProperty('description')){
+        // Never provided attribute, no problem here
+        return res.status(400).send();
+    }
+
+    _.extend(item, validAttributes);
+
+    res.json(item);
 });
 
 app.listen(PORT, function () {
